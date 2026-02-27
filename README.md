@@ -1,77 +1,71 @@
-# MyClient Installer
+# VoxelClient Installer – Java Projekt
 
-Automatischer Installer für den MyClient Fabric Mod.
-
----
-
-## ✨ Was macht der Installer?
-
-1. Prüft auf die **neueste Version** über die GitHub Releases API
-2. Erkennt automatisch den **Minecraft mods-Ordner**
-   - Windows: `%APPDATA%\.minecraft\mods`
-   - macOS:   `~/Library/Application Support/minecraft/mods`
-   - Linux:   `~/.minecraft/mods`
-3. Entfernt alte `myclient-*.jar` Dateien
-4. Lädt die aktuelle `.jar` direkt von GitHub herunter
-5. Zeigt Fortschritt in Echtzeit an
+Standalone-Installer für VoxelClient. Lädt automatisch die neueste
+`.jar` von GitHub herunter und installiert sie in den Minecraft-Ordner.
 
 ---
 
-## 🚀 Starten (direkt mit Python)
+## 🚀 Starten (direkt)
 
 ```bash
-# Einmalig – Python 3.9+ wird benötigt (keine pip-Pakete nötig!)
-python3 myclient_installer.py
+mvn clean package
+java -jar target/voxelclient-installer-1.0.0.jar
 ```
 
 ---
 
-## 📦 Als Standalone-EXE bauen (kein Python nötig für Endnutzer)
+## 🪟 Als .exe bauen (Windows)
+
+Die `pom.xml` enthält bereits das **Launch4j Maven Plugin**.
+Nach einem normalen `mvn package` wird die `.exe` automatisch erzeugt:
 
 ```bash
-# PyInstaller installieren
-pip install pyinstaller
-
-# Windows
-pyinstaller --onefile --windowed --name "myclient-installer" myclient_installer.py
-# → dist\myclient-installer.exe
-
-# macOS / Linux
-bash build_installer.sh
-# → dist/myclient-installer
+mvn clean package
 ```
+
+Ausgabe:
+```
+target/voxelclient-installer.exe   ← fertige Windows-EXE
+target/voxelclient-installer-1.0.0.jar  ← fat JAR (plattformübergreifend)
+```
+
+> **Hinweis:** Das Launch4j Maven Plugin lädt Launch4j automatisch herunter.
+> Kein manuelles Installieren nötig.
 
 ---
 
 ## ⚙️ Konfiguration
 
-Nur drei Zeilen in `myclient_installer.py` anpassen:
+Nur `InstallerConfig.java` anpassen:
 
-```python
-GITHUB_OWNER = "yourname"    # ← dein GitHub-Nutzername
-GITHUB_REPO  = "myclient"    # ← dein Repository-Name
-MOD_NAME     = "MyClient"    # ← Anzeigename
+```java
+public static final String GITHUB_OWNER = "VoxelLabs-Minecraft";    // ← dein GitHub-Name
+public static final String GITHUB_REPO  = "voxelclient"; // ← dein Repo-Name
+public static final String MOD_NAME     = "VoxelClient";  // ← Anzeigename
 ```
-
-Der Installer lädt dann automatisch das neueste Release mit `.jar`-Asset.
 
 ---
 
-## 📋 Voraussetzungen (für Endnutzer)
+## 📁 Projektstruktur
 
-| Was        | Version    |
-|------------|------------|
-| Python     | 3.9+ *(nur wenn kein .exe)* |
-| Minecraft  | 1.21.4     |
-| Fabric Loader | ≥ 0.16  |
-| Fabric API | beliebig   |
+```
+pom.xml
+src/main/java/de/voxellabs/installer/
+├── InstallerApp.java        ← Haupt-GUI (Swing)
+├── InstallerConfig.java     ← Konfiguration (GitHub, Farben, Namen)
+├── GitHubClient.java        ← GitHub Releases API
+├── DownloadWorker.java      ← Download-Logik (Hintergrund-Thread)
+└── MinecraftPathDetector.java ← Automatische Pfad-Erkennung
+```
 
 ---
 
-## 🏗️ Projekt-Struktur
+## 📦 Abhängigkeiten
 
-```
-myclient_installer.py   ← Haupt-Installer (GUI + Logik)
-build_installer.sh      ← Build-Skript für Standalone-EXE
-README_installer.md     ← Diese Datei
-```
+| Bibliothek | Zweck                    |
+|------------|--------------------------|
+| GSON       | GitHub API JSON parsen   |
+| Java Swing | GUI (in JDK enthalten)   |
+| Launch4j   | JAR → .exe (nur Build)   |
+
+Alle Abhängigkeiten werden von Maven automatisch heruntergeladen.
