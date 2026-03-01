@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.voxellabs</groupId>
+    <artifactId>voxelclient-installer</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>VoxelClient Installer</name>
+    <description>Automatischer Installer für VoxelClient – lädt die neueste JAR von GitHub</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.class>de.voxellabs.installer.InstallerApp</main.class>
+    </properties>
+
+    <dependencies>
+        <!-- GSON für GitHub API JSON-Parsing -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- ── Compiler ──────────────────────────────────────────────── -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- ── Shade: Alles in eine fette JAR packen ─────────────────── -->
+            <!--
+                Erstellt eine "fat JAR" die alle Abhängigkeiten (GSON) enthält.
+                Ausgabe: target/voxelclient-installer-1.0.0-shaded.jar
+                Diese JAR wird von Launch4j zur .exe verarbeitet.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${main.class}</mainClass>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ── Launch4j: JAR → Windows .exe ──────────────────────────── -->
+            <!--
+                Benötigt Launch4j Installation oder das Maven Plugin.
+                Läuft AUTOMATISCH nach mvn package.
+                Ausgabe: target/voxelclient-installer.exe
+
+                Launch4j herunterladen: https://launch4j.sourceforge.net/
+            -->
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.5.1</version>
+                <executions>
+                    <execution>
+                        <id>build-exe</id>
+                        <phase>package</phase>
+                        <goals><goal>launch4j</goal></goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>target/voxelclient-installer.exe</outfile>
+                            <jar>target/${project.artifactId}-${project.version}.jar</jar>
+                            <icon>src/main/resources/icon.ico</icon>
+                            <errTitle>VoxelClient Installer</errTitle>
+                            <downloadUrl>https://adoptium.net/</downloadUrl>
+
+                            <!-- Fenster-Icon (optional, .ico-Datei) -->
+                            <!-- <icon>src/main/resources/icon.ico</icon> -->
+
+                            <classPath>
+                                <mainClass>${main.class}</mainClass>
+                            </classPath>
+
+                            <jre>
+                                <!-- Mindest-Java-Version -->
+                                <minVersion>21</minVersion>
+                                <!-- JRE wird mitgebundelt wenn vorhanden -->
+                                <bundledJreAsFallback>true</bundledJreAsFallback>
+                                <!-- Falls kein JRE gefunden: Nutzer zum Download schicken -->
+                                <jdkPreference>preferJre</jdkPreference>
+                                <runtimeBits>64/32</runtimeBits>
+                            </jre>
+
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>1.0.0</txtFileVersion>
+                                <fileDescription>VoxelClient Installer</fileDescription>
+                                <copyright>VoxelLabs · MIT License</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0</txtProductVersion>
+                                <productName>VoxelClient</productName>
+                                <internalName>voxelclient-installer</internalName>
+                                <originalFilename>voxelclient-installer.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>
